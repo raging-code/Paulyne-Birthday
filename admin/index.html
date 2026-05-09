@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Paulyne's Debut</title>
+
+  <!-- Security headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; connect-src 'self' https://rsxkatksleryuvdgvuib.supabase.co; img-src 'self' data:;">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Lato', sans-serif; background: #f0f4f8; padding: 2rem; color: #1e2d36; }
+    .admin-container { max-width: 1400px; margin: 0 auto; }
+    .login-card, .dashboard { background: white; border-radius: 24px; padding: 2rem; box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+    h1, h2 { font-family: 'Playfair Display', serif; font-weight: 600; }
+    .btn-admin { background: #3d6e8a; color: white; border: none; padding: 10px 24px; border-radius: 40px; font-weight: bold; cursor: pointer; }
+    .btn-admin-danger { background: #c55d78; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #eef2f6; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .delete-btn { background: none; border: none; color: #c55d78; cursor: pointer; font-weight: bold; }
+    .delete-btn:hover { text-decoration: underline; }
+    .form-add { background: #f9fbfd; padding: 1rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid #cbdde6; }
+    .logout { float: right; background: #1e2d36; color: white; border: none; padding: 6px 18px; border-radius: 40px; cursor: pointer; }
+    .status { margin-top: 1rem; padding: 8px; border-radius: 12px; }
+    .loading { text-align: center; padding: 2rem; }
+    .hidden { display: none; }
+    .btn-refresh { background: #5c8daa; color: white; border: none; padding: 6px 18px; border-radius: 40px; cursor: pointer; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="admin-container" id="app">
+  <!-- Login View -->
+  <div id="loginView" class="hidden">
+    <div class="login-card" style="max-width: 400px; margin: 80px auto;">
+      <h2 class="mb-3">Admin Login</h2>
+      <input type="email" id="loginEmail" class="form-control mb-2" placeholder="Email">
+      <input type="password" id="loginPassword" class="form-control mb-3" placeholder="Password">
+      <button class="btn-admin" id="loginBtn">Sign In</button>
+      <div id="loginError" class="text-danger mt-2 small"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard View -->
+  <div id="dashboardView" class="hidden">
+    <div class="dashboard">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>✨ Admin Dashboard</h1>
+        <button class="logout" id="logoutBtn">Logout</button>
+      </div>
+      <hr>
+
+      <!-- Add RSVP Manually -->
+      <div class="form-add">
+        <h3>➕ Add RSVP Manually</h3>
+        <div class="row g-2">
+          <div class="col-md-3"><input type="text" id="adminFullName" class="form-control" placeholder="Full Name"></div>
+          <div class="col-md-3"><input type="email" id="adminEmail" class="form-control" placeholder="Email"></div>
+          <div class="col-md-2"><input type="text" id="adminContact" class="form-control" placeholder="Contact"></div>
+          <div class="col-md-2">
+            <select id="adminAttending" class="form-select">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="col-md-2"><button class="btn-admin" id="addRsvpBtn">Add RSVP</button></div>
+        </div>
+        <div id="adminRsvpMsg" class="status small"></div>
+      </div>
+
+      <!-- RSVP Table -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2>📋 RSVP List</h2>
+        <button class="btn-refresh" id="refreshRsvpBtn">↻ Refresh</button>
+      </div>
+      <div class="table-responsive">
+        <table id="rsvpTable">
+          <thead><tr><th>Name</th><th>Email</th><th>Contact</th><th>Attending</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="rsvpTableBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <p id="rsvpCount" class="text-muted small mt-1"></p>
+
+      <hr class="my-4">
+
+      <!-- Messages Table -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2>💬 Guestbook Messages</h2>
+        <button class="btn-refresh" id="refreshMsgBtn">↻ Refresh</button>
+      </div>
+      <div class="table-responsive">
+        <table id="messagesTable">
+          <thead><tr><th>Name</th><th>Message</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="msgTableBody"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <p id="msgCount" class="text-muted small mt-1"></p>
+    </div>
+  </div>
+</div>
+<script src="admin.js"></script>
+</body>
+</html>
